@@ -12,6 +12,16 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: npm
+    services:
+      redis:
+        image: redis:7.4.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     permissions:
       contents: read
       id-token: write
@@ -29,6 +39,9 @@ jobs:
           GITHUB_REF_NAME: ${{ github.ref_name }}
       - run: npm test
       - run: npm run test:integration
+        env:
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
       - run: npm run test:integration:cluster
       - run: npm run test:consumer-types
       - run: npm run typecheck
