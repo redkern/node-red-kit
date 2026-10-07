@@ -1,0 +1,122 @@
+{
+  "revision": "2026-10-06",
+  "stage": "1.0.0",
+  "releaseReady": true,
+  "coverage": {
+    "command": "npm run test:coverage",
+    "lines": 100,
+    "branches": 100,
+    "functions": 100,
+    "required": 100
+  },
+  "audit": {
+    "command": "npm audit --omit=dev",
+    "vulnerabilities": 0,
+    "severity": { "high": 0, "moderate": 0 },
+    "source": "Production dependency tree; the package has no runtime dependencies"
+  },
+  "developmentAudit": {
+    "command": "npm audit",
+    "vulnerabilities": 5,
+    "severity": { "high": 3, "moderate": 2 },
+    "blocking": false,
+    "source": "@node-red/registry@5.0.7 bundled npm@11.21.0 dependencies"
+  },
+  "requirements": [
+    { "id": "KIT-NAME-1", "stage": "alpha.1", "method": "test", "evidence": "test/unit/naming.test.js: names builds the complete domain namespace", "status": "passed" },
+    { "id": "KIT-NAME-2", "stage": "alpha.1", "method": "test", "evidence": "test/unit/naming.test.js: names rejects domains outside the specified format", "status": "passed" },
+    { "id": "KIT-NAME-4", "stage": "alpha.1", "method": "test", "evidence": "test/unit/naming.test.js: instanceId uses the operating system hostname and ignores HOSTNAME", "status": "passed" },
+    { "id": "KIT-CFG-1", "stage": "alpha.1", "method": "test", "evidence": "test/unit/config.test.js: parseConfig returns no partial value for validation errors", "status": "passed" },
+    { "id": "KIT-CFG-2", "stage": "alpha.1", "method": "test", "evidence": "test/unit/config.test.js: parseConfig preserves zero and converts declared types", "status": "passed" },
+    { "id": "KIT-CFG-3", "stage": "alpha.1", "method": "test", "evidence": "test/unit/config.test.js: parseConfig preserves zero and converts declared types", "status": "passed" },
+    { "id": "KIT-CFG-6", "stage": "alpha.1", "method": "test", "evidence": "test/unit/config.test.js: readSettings uses Node-RED type-prefixed camelCase keys and schema allowlist; test/unit/init.test.js: plugin requires an explicit id and has no node lifecycle methods", "status": "passed" },
+    { "id": "KIT-CFG-7", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: disabled nodes silently complete input and invalid settings return an error", "status": "passed" },
+    { "id": "KIT-SEC-1", "stage": "alpha.1", "method": "test", "evidence": "test/unit/secrets.test.js: readSecret honors explicit credential clearing and legacy fallback only when absent; test/integration/runtime.test.js: KIT-SEC-1 real runtime supplies credentials and kit redacts logs", "status": "passed" },
+    { "id": "KIT-SEC-2", "stage": "alpha.1", "method": "test", "evidence": "test/unit/secrets.test.js: readSecret honors explicit credential clearing and legacy fallback only when absent", "status": "passed" },
+    { "id": "KIT-SEC-3", "stage": "alpha.1", "method": "test", "evidence": "test/unit/secrets.test.js: two nodes hold duplicate secret leases independently", "status": "passed" },
+    { "id": "KIT-ARCH-7", "stage": "alpha.1", "method": "ci", "evidence": "npm ls --omit=dev", "status": "passed" },
+    { "id": "KIT-ARCH-8", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: invalid node configure blocks input even without onStart", "status": "passed" },
+    { "id": "KIT-RES-1", "stage": "alpha.1", "method": "test", "evidence": "test/unit/resilience.test.js: backoff supports bounds, reset, and invalid options", "status": "passed" },
+    { "id": "KIT-RES-2", "stage": "alpha.1", "method": "test", "evidence": "test/unit/resilience.test.js: sleep and retry respect AbortSignal", "status": "passed" },
+    { "id": "KIT-RES-3", "stage": "alpha.1", "method": "test", "evidence": "test/unit/resilience.test.js: retry retries only matching errors", "status": "passed" },
+    { "id": "KIT-RES-4", "stage": "alpha.1", "method": "test", "evidence": "test/unit/resilience.test.js: withTimeout clears on success and handles late rejection", "status": "passed" },
+    { "id": "KIT-RES-5", "stage": "alpha.1", "method": "test", "evidence": "test/unit/resilience.test.js: limiter enforces concurrency and queue bounds", "status": "passed" },
+    { "id": "KIT-ASYNC-1", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: bind handles enabled input, tracks rejected work, and aborts on close", "status": "passed" },
+    { "id": "KIT-ASYNC-2", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: startup queue deadlines start when input arrives and expired messages never run", "status": "passed" },
+    { "id": "KIT-ASYNC-3", "stage": "alpha.1", "method": "ci", "evidence": "package.json:test and test:coverage scripts use --unhandled-rejections=strict", "status": "passed" },
+    { "id": "KIT-ASYNC-4", "stage": "alpha.1", "method": "test", "evidence": "test/integration/runtime.test.js: KIT-NR-1 real runtime initializes node before bind and forwards msg", "status": "passed" },
+    { "id": "KIT-LOG-3", "stage": "alpha.1", "method": "test", "evidence": "test/unit/logging.test.js: system status overlays restore the latest palette status when cleared; status uses Node-RED colors and keeps text below 20 characters", "status": "passed" },
+    { "id": "KIT-LIFE-1", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: failed close calls force and continues with older resources", "status": "passed" },
+    { "id": "KIT-LIFE-2", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: closing during startup aborts the attempt and releases its resources", "status": "passed" },
+    { "id": "KIT-LIFE-3", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: onStart retries transient failures and input waits for readiness", "status": "passed" },
+    { "id": "KIT-LIFE-4", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: closing during startup aborts the attempt and releases its resources", "status": "passed" },
+    { "id": "KIT-NR-1", "stage": "alpha.1", "method": "test", "evidence": "test/integration/runtime.test.js: KIT-NR-1 real runtime initializes node before bind and forwards msg", "status": "passed" },
+    { "id": "KIT-MET-1", "stage": "alpha.2", "method": "test", "evidence": "test/unit/metrics.test.js: node metrics lease is optional and released automatically on close", "status": "passed" },
+    { "id": "KIT-MET-2", "stage": "alpha.2", "method": "test", "evidence": "test/unit/metrics.test.js: metrics source validates Prometheus text 0.0.4 media type", "status": "passed" },
+    { "id": "KIT-MET-3", "stage": "alpha.2", "method": "test", "evidence": "test/unit/metrics.test.js: metrics registration delegates exposition without aggregating scrapes", "status": "passed" },
+    { "id": "KIT-AUTH-1", "stage": "alpha.2", "method": "test", "evidence": "test/unit/auth.test.js: secureCompare accepts equal non-empty strings and rejects invalid or unequal values", "status": "passed" },
+    { "id": "KIT-AUTH-2", "stage": "alpha.2", "method": "test", "evidence": "test/unit/auth.test.js: extractToken rejects ambiguous, repeated, malformed, and oversized tokens", "status": "passed" },
+    { "id": "KIT-AUTH-3", "stage": "alpha.2", "method": "test", "evidence": "test/unit/secrets.test.js: requireSecret blocks startup before handler I/O", "status": "passed" },
+    { "id": "KIT-AUTH-4", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: admin route fails closed without adminAuth or when admin API is disabled", "status": "passed" },
+    { "id": "KIT-AUTH-5", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: admin route registration uses public permission API and active-entry snapshot", "status": "passed" },
+    { "id": "KIT-HTTP-1", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: admin route registration uses public permission API and active-entry snapshot", "status": "passed" },
+    { "id": "KIT-HTTP-2", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: admin route registration uses public permission API and active-entry snapshot", "status": "passed" },
+    { "id": "KIT-HTTP-3", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: empty registry returns 503 and JSON writes reject invalid media types", "status": "passed" },
+    { "id": "KIT-HTTP-4", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: JSON UTF-8 writes use facade and sanitize public errors", "status": "passed" },
+    { "id": "KIT-HTTP-5", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: token listener enforces authentication, JSON, body size, and public errors; internal listener returns 503 when the active request limit is reached", "status": "passed" },
+    { "id": "KIT-HTTP-6", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: local listener binds loopback and serves exact routes", "status": "passed" },
+    { "id": "KIT-HTTP-7", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: init binds local internal routes and releases the listener with the node lease", "status": "passed" },
+    { "id": "KIT-HTTP-8", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: internal leases are unique, ready rejects when released before listen", "status": "passed" },
+    { "id": "KIT-HTTP-10", "stage": "alpha.2", "method": "lint", "evidence": "scripts/check-runtime-apis.js and lib/http.js register only RED.httpAdmin", "status": "passed" },
+    { "id": "KIT-HTTP-11", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: JSON UTF-8 writes use facade and sanitize public errors", "status": "passed" },
+    { "id": "KIT-HTTP-12", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: HTTP facade rejects unsafe headers and bounds handler time", "status": "passed" }
+    ,{ "id": "KIT-RDS-1", "stage": "beta.1", "method": "test", "evidence": "test/unit/redis.test.js: shared Redis handle is lazy, disables unsafe queues, and connects once", "status": "passed" }
+    ,{ "id": "KIT-RDS-2", "stage": "beta.1", "method": "test", "evidence": "test/unit/redis.test.js: Redis validation, error classifier, scripts, and hash tags reject unsafe inputs", "status": "passed" }
+    ,{ "id": "KIT-RDS-3", "stage": "beta.1", "method": "test", "evidence": "test/unit/redis.test.js: blocking/subscriber roles disable replay and validate command timeout", "status": "passed" }
+    ,{ "id": "KIT-RDS-4", "stage": "beta.1", "method": "test", "evidence": "test/unit/redis.test.js: cluster requires db zero and applies TLS hostname-safe options", "status": "passed" }
+    ,{ "id": "KIT-RDS-5", "stage": "beta.1", "method": "test", "evidence": "test/integration/redis.test.js: KIT-RDS-1 standalone factory is lazy, uses role safety, executes commands, and closes; verifies CLIENT GETNAME is restored after reconnect", "status": "passed" }
+    ,{ "id": "KIT-RDS-6", "stage": "beta.1", "method": "test", "evidence": "test/unit/redis.test.js: Redis validation, error classifier, scripts, and hash tags reject unsafe inputs", "status": "passed" }
+    ,{ "id": "KIT-RDS-7", "stage": "beta.1", "method": "test", "evidence": "test/unit/redis.test.js: Redis validation, error classifier, scripts, and hash tags reject unsafe inputs", "status": "passed" }
+    ,{ "id": "KIT-RDS-8", "stage": "beta.1", "method": "test", "evidence": "test/unit/redis.test.js: Redis validation, error classifier, scripts, and hash tags reject unsafe inputs", "status": "passed" }
+    ,{ "id": "KIT-CFG-4", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: invalid node configure blocks input even without onStart", "status": "passed" }
+    ,{ "id": "KIT-CFG-5", "stage": "alpha.1", "method": "test", "evidence": "test/unit/config.test.js: parseConfig reports parent placeholders and unexpected conversion failures safely", "status": "passed" }
+    ,{ "id": "KIT-CFG-8", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: init rejects invalid runtime arguments and reserved params, and accepts metrics source", "status": "passed" }
+    ,{ "id": "KIT-CFG-9", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: enabledByDefault false disables palette until explicit enable; runtime configuration is snapshotted at init and changes require restart", "status": "passed" }
+    ,{ "id": "KIT-SEC-7", "stage": "alpha.2", "method": "test", "evidence": "test/unit/init.test.js: required internal token is validated and never exposed in config", "status": "passed" }
+    ,{ "id": "KIT-ARCH-2", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: init resolves domain params and the enabled switch", "status": "passed" }
+    ,{ "id": "KIT-ARCH-3", "stage": "alpha.1", "method": "lint", "evidence": "npm run lint:runtime: checks runtime APIs and restricts process.env reads to readEnv", "status": "passed" }
+    ,{ "id": "KIT-ARCH-4", "stage": "alpha.1", "method": "lint", "evidence": "npm run lint:runtime: forbids private Node-RED fields and direct @node-red imports", "status": "passed" }
+    ,{ "id": "KIT-ARCH-5", "stage": "alpha.1", "method": "ci", "evidence": "npm run typecheck and npm run test:consumer-types", "status": "passed" }
+    ,{ "id": "KIT-ARCH-6", "stage": "alpha.1", "method": "test", "evidence": "test/unit/naming.test.js: declared Redis subpath resolves and deep imports stay closed", "status": "passed" }
+    ,{ "id": "KIT-ARCH-9", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: plugin requires an explicit id and has no node lifecycle methods", "status": "passed" }
+    ,{ "id": "KIT-ASYNC-5", "stage": "alpha.1", "method": "test", "evidence": "test/unit/async.test.js: default tracking state, fallback send, and active input abort are covered", "status": "passed" }
+    ,{ "id": "KIT-LOG-1", "stage": "alpha.1", "method": "test", "evidence": "test/unit/logging.test.js: node logs use Node-RED node methods and dedupe emits a trailing summary", "status": "passed" }
+    ,{ "id": "KIT-LOG-2", "stage": "alpha.1", "method": "test", "evidence": "test/unit/logging.test.js: logger includes correlation IDs and derives dedupe keys from Error codes", "status": "passed" }
+    ,{ "id": "KIT-LOG-4", "stage": "alpha.1", "method": "test", "evidence": "test/unit/async.test.js: errorOutput preserves previous error and maps primitive message", "status": "passed" }
+    ,{ "id": "KIT-LOG-5", "stage": "alpha.1", "method": "test", "evidence": "test/unit/logging.test.js: status rate limit applies the last state and dispose cancels trailing update; status cadence timer is unrefed and cleared on disposal", "status": "passed" }
+    ,{ "id": "KIT-LIFE-5", "stage": "alpha.1", "method": "test", "evidence": "test/unit/init.test.js: plugin requires an explicit id and has no node lifecycle methods", "status": "passed" }
+    ,{ "id": "KIT-LIFE-6", "stage": "alpha.1", "method": "test", "evidence": "test/unit/lifecycle.test.js: successful force permits retry and classifier failures stop startup", "status": "passed" }
+    ,{ "id": "KIT-NR-6", "stage": "alpha.1", "method": "ci", "evidence": "scripts/check-pack.js rejects Node-RED palette metadata and editor resources in the kit package; docs/palette-publication.md covers palette metadata", "status": "passed" }
+    ,{ "id": "KIT-NR-7", "stage": "alpha.1", "method": "test", "evidence": "test/integration/runtime.test.js: KIT-NR-1 real runtime initializes node before bind and forwards msg; test/integration/runtime.test.js: KIT-SEC-1 real runtime supplies credentials and kit redacts logs", "status": "passed" }
+    ,{ "id": "KIT-ARCH-1", "stage": "alpha.1", "method": "lint", "evidence": "npm run lint:runtime: immutable module-state AST guard with positive and negative fixtures; test/unit/logging.test.js: shared Node-RED status definitions are immutable", "status": "passed" }
+    ,{ "id": "KIT-LIFE-7", "stage": "alpha.1", "method": "test", "evidence": "test/unit/lifecycle.test.js: successful startup is terminal and does not auto-retry", "status": "passed" }
+    ,{ "id": "KIT-MET-4", "stage": "alpha.2", "method": "test", "evidence": "test/unit/metrics.test.js: metrics registration delegates exposition without aggregating scrapes; npm ls --omit=dev", "status": "passed" }
+    ,{ "id": "KIT-ARCH-10", "stage": "alpha.1", "method": "test", "evidence": "test/unit/secrets.test.js: independent init contexts do not share secret owners or redaction closures; test/unit/metrics.test.js: metrics registration delegates exposition without aggregating scrapes", "status": "passed" }
+    ,{ "id": "KIT-SEC-5", "stage": "alpha.1", "method": "lint", "evidence": "npm run lint:runtime forbids direct console/process output; test/unit/http.test.js and test/unit/internal-server.test.js cover sanitized response facades", "status": "passed" }
+    ,{ "id": "KIT-SEC-6", "stage": "alpha.1", "method": "test", "evidence": "test/unit/secrets.test.js: status and logs redact secret values and track rejects work after close; credential rotation and duplicate close release each owner lease exactly once", "status": "passed" }
+    ,{ "id": "KIT-NAME-3", "stage": "alpha.1", "method": "test", "evidence": "test/unit/redis.test.js: kit does not expose data identifier or schema migration helpers", "status": "passed" }
+    ,{ "id": "KIT-ASYNC-6", "stage": "alpha.1", "method": "scope", "scope": "palette", "evidence": "scripts/check-pack.js confirms the kit ships no palette node/editor files; see docs/palette-publication.md for source-node obligations", "status": "not-applicable" }
+    ,{ "id": "KIT-HTTP-9", "stage": "alpha.2", "method": "scope", "scope": "palette", "evidence": "scripts/check-pack.js confirms the kit ships no deployment hook; see docs/palette-publication.md for palette preStop obligations", "status": "not-applicable" }
+    ,{ "id": "KIT-NR-2", "stage": "alpha.1", "method": "scope", "scope": "palette", "evidence": "scripts/check-pack.js confirms the kit ships no node/editor files; see docs/palette-publication.md for port/wire obligations", "status": "not-applicable" }
+    ,{ "id": "KIT-NR-3", "stage": "alpha.1", "method": "scope", "scope": "palette", "evidence": "scripts/check-pack.js confirms the kit ships no config nodes; see docs/palette-publication.md for config-node obligations", "status": "not-applicable" }
+    ,{ "id": "KIT-NR-4", "stage": "alpha.1", "method": "scope", "scope": "palette", "evidence": "scripts/check-pack.js confirms the kit ships no editor resources; see docs/palette-publication.md for editor/credential obligations", "status": "not-applicable" }
+    ,{ "id": "KIT-NR-5", "stage": "alpha.1", "method": "scope", "scope": "palette", "evidence": "scripts/check-pack.js confirms the kit ships no node help files; see docs/palette-publication.md for help obligations", "status": "not-applicable" }
+    ,{ "id": "KIT-RDS-9", "stage": "beta.1", "method": "ci", "evidence": "npm run test:integration:cluster: test/cluster/redis-cluster.test.js: KIT-RDS-9 validates a TLS Redis Cluster, replica failover, and fault-proxy reconnect", "status": "passed" }
+    ,{ "id": "KIT-SEC-4", "stage": "alpha.1", "method": "scope", "scope": "palette", "evidence": "scripts/check-pack.js confirms the kit ships no credential migration; docs/palette-publication.md requires secret rotation and Git-history/backup handling for palette migrations", "status": "not-applicable" }
+  ],
+  "missingRequirements": [],
+  "deferredRequirements": {
+    "alpha.2": [],
+    "beta.1": []
+  }
+}

@@ -1,0 +1,7 @@
+name: Check requirement IDs
+description: Verify requirement definitions are accounted for in verification.json.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: npm run verify:requirements

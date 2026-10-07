@@ -1,0 +1,76 @@
+{
+  "name": "@redkern/node-red-kit",
+  "version": "1.0.0",
+  "description": "Shared runtime library for redkern Node-RED palettes",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/redkern/node-red-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/redkern/node-red-kit/issues"
+  },
+  "homepage": "https://github.com/redkern/node-red-kit#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "redkern": {
+    "reqPrefix": "KIT"
+  },
+  "type": "commonjs",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./redis": {
+      "types": "./redis.d.ts",
+      "default": "./redis.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "redis.js",
+    "redis.d.ts",
+    "lib/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "test": "node --unhandled-rejections=strict --test test/unit/*.test.js",
+    "test:integration": "node --unhandled-rejections=strict --test test/integration/*.test.js",
+    "test:integration:cluster": "node --unhandled-rejections=strict scripts/test-redis-cluster.js",
+    "test:consumer-types": "npm run types:build && node scripts/test-consumer-types.js",
+    "verify:requirements": "node scripts/check-req-ids.js",
+    "check:release": "node scripts/check-release.js",
+    "check:pack": "node scripts/check-pack.js",
+    "lint:runtime": "node scripts/check-runtime-apis.js",
+    "test:coverage": "c8 --check-coverage --lines 100 --branches 100 --functions 100 --include='index.js' --include='redis.js' --include='lib/**/*.js' node --unhandled-rejections=strict --test test/unit/*.test.js",
+    "typecheck": "npm run types:build && tsc --noEmit",
+    "types:build": "node scripts/clean-types.js && tsc --declaration --emitDeclarationOnly && node scripts/copy-types.js"
+  },
+  "devDependencies": {
+    "ioredis": "6.0.0",
+    "node-red": "^5.0.7",
+    "node-red-node-test-helper": "0.3.6",
+    "c8": "12.0.0",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@node-red/registry": {
+      "npm": "11.21.0"
+    },
+    "moment": "2.31.0",
+    "multer": "2.4.0",
+    "qs": "6.16.0"
+  }
+}

@@ -1,0 +1,26 @@
+declare const _exports: {
+    PublicError: typeof auth.PublicError;
+    requireSecret: typeof requireSecret;
+    init: typeof init;
+    secureCompare: typeof auth.secureCompare;
+    extractToken: typeof auth.extractToken;
+    backoff: typeof resilience.backoff;
+    sleep: typeof resilience.sleep;
+    retry: typeof resilience.retry;
+    withTimeout: typeof resilience.withTimeout;
+    createLimiter: typeof resilience.createLimiter;
+    classifyError: typeof resilience.classifyError;
+    ConfigError: typeof config.ConfigError;
+    parseConfig: typeof config.parseConfig;
+    readEnv: typeof config.readEnv;
+    readSettings: typeof config.readSettings;
+    names: typeof naming.names;
+    instanceId: typeof naming.instanceId;
+};
+export = _exports;
+import auth = require("./lib/auth.js");
+import { requireSecret } from "./lib/secrets.js";
+import { init } from "./lib/init.js";
+import resilience = require("./lib/resilience.js");
+import config = require("./lib/config.js");
+import naming = require("./lib/naming.js");

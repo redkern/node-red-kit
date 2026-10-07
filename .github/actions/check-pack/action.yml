@@ -1,0 +1,7 @@
+name: Check package tarball
+description: Validate the packed file whitelist and publication metadata.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: npm run check:pack

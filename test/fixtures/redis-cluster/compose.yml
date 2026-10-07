@@ -1,0 +1,104 @@
+x-redis-node: &redis-node
+  image: redis:7.4.2-alpine
+  volumes:
+    - ${REDKERN_TEST_CERT_DIR}:/certs:ro
+  command:
+    - sh
+    - -c
+    - >-
+      exec redis-server --port 0 --tls-port 6379
+      --tls-cert-file /certs/server.crt --tls-key-file /certs/server.key
+      --tls-ca-cert-file /certs/server.crt --tls-auth-clients no
+      --tls-cluster yes --tls-replication yes
+      --cluster-enabled yes --cluster-config-file nodes.conf
+      --cluster-node-timeout 1500 --cluster-announce-port 6379
+      --cluster-announce-bus-port 16379
+      --cluster-announce-hostname "$$NODE_NAME"
+      --cluster-preferred-endpoint-type hostname
+  healthcheck:
+    test: ["CMD-SHELL", "redis-cli --tls --cacert /certs/server.crt -h localhost -p 6379 PING | grep -q PONG"]
+    interval: 2s
+    timeout: 2s
+    retries: 30
+    start_period: 2s
+
+services:
+  redis-1:
+    <<: *redis-node
+    environment: { NODE_NAME: redis-1 }
+    networks: { default: { ipv4_address: 10.254.240.11 } }
+  redis-2:
+    <<: *redis-node
+    environment: { NODE_NAME: redis-2 }
+    networks: { default: { ipv4_address: 10.254.240.12 } }
+  redis-3:
+    <<: *redis-node
+    environment: { NODE_NAME: redis-3 }
+    networks: { default: { ipv4_address: 10.254.240.13 } }
+  redis-4:
+    <<: *redis-node
+    environment: { NODE_NAME: redis-4 }
+    networks: { default: { ipv4_address: 10.254.240.14 } }
+  redis-5:
+    <<: *redis-node
+    environment: { NODE_NAME: redis-5 }
+    networks: { default: { ipv4_address: 10.254.240.15 } }
+  redis-6:
+    <<: *redis-node
+    environment: { NODE_NAME: redis-6 }
+    networks: { default: { ipv4_address: 10.254.240.16 } }
+
+  cluster-init:
+    image: redis:7.4.2-alpine
+    volumes:
+      - ${REDKERN_TEST_CERT_DIR}:/certs:ro
+    networks: { default: { ipv4_address: 10.254.240.17 } }
+    depends_on:
+      redis-1: { condition: service_healthy }
+      redis-2: { condition: service_healthy }
+      redis-3: { condition: service_healthy }
+      redis-4: { condition: service_healthy }
+      redis-5: { condition: service_healthy }
+      redis-6: { condition: service_healthy }
+    command:
+      - sh
+      - -c
+      - >-
+        redis-cli --tls --cacert /certs/server.crt --cluster create
+        redis-1:6379 redis-2:6379 redis-3:6379
+        redis-4:6379 redis-5:6379 redis-6:6379
+        --cluster-replicas 1 --cluster-yes
+        && touch /tmp/cluster-ready && tail -f /dev/null
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/cluster-ready"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    command: ["-host=0.0.0.0"]
+    expose: ["8474", "26379"]
+    networks: { default: { ipv4_address: 10.254.240.20 } }
+
+  integration-test:
+    image: node:22.23.3-bookworm-slim
+    working_dir: /workspace
+    volumes:
+      - ${REDKERN_REPO_ROOT}:/workspace:ro
+      - ${REDKERN_NODE_MODULES}:/workspace/node_modules:ro
+      - ${REDKERN_TEST_CERT_DIR}:/certs:ro
+    networks: { default: { ipv4_address: 10.254.240.21 } }
+    environment:
+      REDKERN_TEST_CA_FILE: /certs/server.crt
+      REDKERN_TOXIPROXY_URL: http://toxiproxy:8474
+    depends_on:
+      cluster-init: { condition: service_healthy }
+      toxiproxy: { condition: service_started }
+    command: ["node", "--unhandled-rejections=strict", "--test", "test/cluster/redis-cluster.test.js"]
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.254.240.0/24

@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "allowJs": true,
+    "checkJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": ".types",
+    "strict": false,
+    "types": ["node"],
+    "skipLibCheck": true,
+    "noEmitOnError": true
+  },
+  "include": [
+    "index.js",
+    "redis.js",
+    "lib/**/*.js",
+  ],
+  "exclude": [
+    "node_modules",
+    "test"
+  ]
+}
