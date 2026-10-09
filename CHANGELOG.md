@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 - 2026-10-09
+
+- Allow loopback-only and token-authenticated internal routes to share one listener; local authorization always checks the peer socket address.
+
 ## 1.0.0 - 2026-10-07
 
 - Add auth primitives and fail-closed admin route registry.

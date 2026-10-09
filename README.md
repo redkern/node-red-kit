@@ -2,7 +2,7 @@
 
 Shared runtime library for redkern Node-RED palettes. It registers no node types, editor resources, or runtime plugins by itself and has no runtime dependencies.
 
-> **Status:** `1.0.0-alpha.1` development. Implemented: init/bind/plugin, naming, config, secrets, auth, admin/internal HTTP, metrics source lifecycle, Redis client factory, resilience, async, logging, and lifecycle. Stable release gates are not yet satisfied.
+> **Status:** Stable release, version `1.0.1`. Implemented: init/bind/plugin, naming, config, secrets, auth, admin/internal HTTP, metrics source lifecycle, Redis client factory, resilience, async, logging, and lifecycle.
 
 ## Requirements
 

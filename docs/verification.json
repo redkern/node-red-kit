@@ -1,5 +1,5 @@
 {
-  "revision": "2026-10-06",
+  "revision": "2026-10-09",
   "stage": "1.0.0",
   "releaseReady": true,
   "coverage": {
@@ -63,7 +63,7 @@
     { "id": "KIT-HTTP-2", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: admin route registration uses public permission API and active-entry snapshot", "status": "passed" },
     { "id": "KIT-HTTP-3", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: empty registry returns 503 and JSON writes reject invalid media types", "status": "passed" },
     { "id": "KIT-HTTP-4", "stage": "alpha.2", "method": "test", "evidence": "test/unit/http.test.js: JSON UTF-8 writes use facade and sanitize public errors", "status": "passed" },
-    { "id": "KIT-HTTP-5", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: token listener enforces authentication, JSON, body size, and public errors; internal listener returns 503 when the active request limit is reached", "status": "passed" },
+    { "id": "KIT-HTTP-5", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: token listener enforces authentication, JSON, body size, and public errors; mixed internal listener enforces local peer address independently of forwarded headers", "status": "passed" },
     { "id": "KIT-HTTP-6", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: local listener binds loopback and serves exact routes", "status": "passed" },
     { "id": "KIT-HTTP-7", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: init binds local internal routes and releases the listener with the node lease", "status": "passed" },
     { "id": "KIT-HTTP-8", "stage": "alpha.2", "method": "test", "evidence": "test/unit/internal-server.test.js: internal leases are unique, ready rejects when released before listen", "status": "passed" },

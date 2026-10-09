@@ -60,13 +60,75 @@ test('internal server requires explicit route auth and rejects unsafe route layo
     { method: 'get', path: '/same', auth: 'local', handler() {} }
   ]), /duplicate internal route/);
   assert.throws(() => makeServer(port, [{ method: 'GET', path: '/health', handler() {} }]), /requires local auth or a declared token/);
-  assert.throws(() => makeServer(port, [
+  const mixed = makeServer(port, [
     { method: 'GET', path: '/local', auth: 'local', handler() {} },
     { method: 'GET', path: '/metrics', auth: { token: 'metrics' }, handler() {} }
-  ], { metrics: TOKEN }), /cannot share/);
+  ], { metrics: TOKEN });
+  assert.equal(mixed.host, '0.0.0.0');
   assert.throws(() => makeServer(port, [{ method: 'GET', path: '/metrics', auth: { token: 'missing' }, handler() {} }]), /declared token/);
   assert.throws(() => makeServer(port, [{ method: 'GET', path: '/:id', auth: 'local', handler() {} }]), /static absolute suffix/);
   assert.throws(() => makeServer(port, [{ method: 'TRACE', path: '/health', auth: 'local', handler() {} }]), /unsupported/);
+});
+
+test('mixed internal listener enforces local peer address independently of forwarded headers', async () => {
+  const originalCreateServer = http.createServer;
+  let dispatch;
+  const instance = new EventEmitter();
+  instance.listening = false;
+  instance.listen = () => {
+    instance.listening = true;
+    setImmediate(() => instance.emit('listening'));
+    return instance;
+  };
+  instance.close = (callback) => {
+    instance.listening = false;
+    setImmediate(() => { callback?.(); instance.emit('close'); });
+    return instance;
+  };
+  const routes = [
+    { method: 'POST', path: '/prestop', auth: 'local', handler: async (_request, response) => response.json({ drained: true }) },
+    { method: 'GET', path: '/metrics', auth: { token: 'metrics' }, handler: async (_request, response) => response.json({ metrics: true }) }
+  ];
+  const server = makeServer(9558, routes, { metrics: TOKEN });
+  assert.equal(server.host, '0.0.0.0');
+  http.createServer = (_options, handler) => { dispatch = handler; return instance; };
+
+  function makeRequest(remoteAddress) {
+    const request = new EventEmitter();
+    request.url = '/redkern/redis/prestop';
+    request.method = 'POST';
+    request.headers = { 'content-type': 'application/json', 'content-length': '2', 'x-forwarded-for': '127.0.0.1' };
+    request.socket = { remoteAddress };
+    request[Symbol.asyncIterator] = async function* () { yield Buffer.from('{}'); };
+    return request;
+  }
+
+  function makeResponse() {
+    const response = new EventEmitter();
+    response.statusCode = 200;
+    response.headersSent = false;
+    response.writableEnded = false;
+    response.writeHead = (statusCode) => { response.statusCode = statusCode; response.headersSent = true; };
+    response.end = (body) => { response.body = body; response.writableEnded = true; };
+    return response;
+  }
+
+  let lease;
+  try {
+    lease = await acquire(server, 'mixed-route-owner');
+    const remote = makeResponse();
+    await dispatch(makeRequest('192.0.2.10'), remote);
+    assert.equal(remote.statusCode, 401);
+    assert.deepEqual(JSON.parse(remote.body), { error: 'Unauthorized', code: 'UNAUTHORIZED' });
+
+    const local = makeResponse();
+    await dispatch(makeRequest('127.0.0.1'), local);
+    assert.equal(local.statusCode, 200);
+    assert.deepEqual(JSON.parse(local.body), { drained: true });
+  } finally {
+    http.createServer = originalCreateServer;
+    if (lease) await lease.release();
+  }
 });
 
 test('local listener binds loopback and serves exact routes', async () => {
