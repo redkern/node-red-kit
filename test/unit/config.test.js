@@ -178,8 +178,21 @@ test('parseConfig covers safe numeric, default, and non-sized boolean bounds', (
   assert.deepEqual(parseConfig({}, { label: { type: 'str', default: '' } }), { ok: true, value: { label: '' } });
   assert.throws(() => parseConfig({}, { tags: { type: 'list', required: true, default: [] } }), /empty default/);
   assert.throws(() => parseConfig({}, { count: { type: 'int', required: true, default: '  ' } }), /empty default/);
-  assert.deepEqual(parseConfig({ enabled: true }, { enabled: { type: 'bool', min: 1, max: 1 } }), {
+  assert.deepEqual(parseConfig({ enabled: true }, { enabled: { type: 'bool' } }), {
     ok: true,
     value: { enabled: true }
   });
+});
+
+test('KIT-CFG-2 schema rejects incompatible and unknown options and bool accepts only scalar forms', () => {
+  assert.throws(() => parseConfig({}, { enabled: { type: 'bool', min: 1 } }), /min\/max are not valid/);
+  assert.throws(() => parseConfig({}, { mode: { type: 'enum', values: ['a'], max: 1 } }), /min\/max are not valid/);
+  assert.throws(() => parseConfig({}, { count: { type: 'int', values: ['1'] } }), /values is only valid/);
+  assert.throws(() => parseConfig({}, { count: { type: 'int', label: 'Count' } }), /Unknown config schema option/);
+  assert.throws(() => parseConfig({}, { count: { type: 'int', required: 'yes' } }), /required must be boolean/);
+  assert.throws(() => parseConfig({}, { count: null }), /Invalid config schema/);
+  assert.equal(parseConfig({ flag: [true] }, { flag: { type: 'bool' } }).errors[0].code, 'INVALID_BOOL');
+  assert.equal(parseConfig({ flag: { toString: () => 'true' } }, { flag: { type: 'bool' } }).errors[0].code, 'INVALID_BOOL');
+  assert.equal(parseConfig({ flag: ' TRUE ' }, { flag: { type: 'bool' } }).value.flag, true);
+  assert.equal(parseConfig({ flag: 0 }, { flag: { type: 'bool' } }).value.flag, false);
 });

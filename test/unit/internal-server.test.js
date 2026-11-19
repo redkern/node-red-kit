@@ -60,17 +60,19 @@ test('internal server requires explicit route auth and rejects unsafe route layo
     { method: 'get', path: '/same', auth: 'local', handler() {} }
   ]), /duplicate internal route/);
   assert.throws(() => makeServer(port, [{ method: 'GET', path: '/health', handler() {} }]), /requires local auth or a declared token/);
-  const mixed = makeServer(port, [
+  assert.throws(() => makeServer(port, [
     { method: 'GET', path: '/local', auth: 'local', handler() {} },
     { method: 'GET', path: '/metrics', auth: { token: 'metrics' }, handler() {} }
-  ], { metrics: TOKEN });
-  assert.equal(mixed.host, '0.0.0.0');
+  ], { metrics: TOKEN }), /cannot mix local and token routes/);
+  const exposed = makeServer(port, [{ method: 'GET', path: '/metrics', auth: { token: 'metrics' }, handler() {} }], { metrics: TOKEN });
+  assert.equal(exposed.host, '0.0.0.0');
+  assert.throws(() => makeServer(port, [{ method: 'GET', path: '/slow', auth: 'local', handlerTimeoutMs: 0, handler() {} }]), /route handlerTimeoutMs/);
   assert.throws(() => makeServer(port, [{ method: 'GET', path: '/metrics', auth: { token: 'missing' }, handler() {} }]), /declared token/);
   assert.throws(() => makeServer(port, [{ method: 'GET', path: '/:id', auth: 'local', handler() {} }]), /static absolute suffix/);
   assert.throws(() => makeServer(port, [{ method: 'TRACE', path: '/health', auth: 'local', handler() {} }]), /unsupported/);
 });
 
-test('mixed internal listener enforces local peer address independently of forwarded headers', async () => {
+test('KIT-HTTP-6 local listener enforces exact peer address independently of forwarded headers', async () => {
   const originalCreateServer = http.createServer;
   let dispatch;
   const instance = new EventEmitter();
@@ -86,11 +88,10 @@ test('mixed internal listener enforces local peer address independently of forwa
     return instance;
   };
   const routes = [
-    { method: 'POST', path: '/prestop', auth: 'local', handler: async (_request, response) => response.json({ drained: true }) },
-    { method: 'GET', path: '/metrics', auth: { token: 'metrics' }, handler: async (_request, response) => response.json({ metrics: true }) }
+    { method: 'POST', path: '/prestop', auth: 'local', handler: async (_request, response) => response.json({ drained: true }) }
   ];
-  const server = makeServer(9558, routes, { metrics: TOKEN });
-  assert.equal(server.host, '0.0.0.0');
+  const server = makeServer(9558, routes);
+  assert.equal(server.host, '127.0.0.1');
   http.createServer = (_options, handler) => { dispatch = handler; return instance; };
 
   function makeRequest(remoteAddress) {
@@ -115,11 +116,13 @@ test('mixed internal listener enforces local peer address independently of forwa
 
   let lease;
   try {
-    lease = await acquire(server, 'mixed-route-owner');
-    const remote = makeResponse();
-    await dispatch(makeRequest('192.0.2.10'), remote);
-    assert.equal(remote.statusCode, 401);
-    assert.deepEqual(JSON.parse(remote.body), { error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    lease = await acquire(server, 'local-route-owner');
+    for (const address of ['192.0.2.10', '127.0.0.6']) {
+      const remote = makeResponse();
+      await dispatch(makeRequest(address), remote);
+      assert.equal(remote.statusCode, 401);
+      assert.deepEqual(JSON.parse(remote.body), { error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    }
 
     const local = makeResponse();
     await dispatch(makeRequest('127.0.0.1'), local);

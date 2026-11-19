@@ -38,8 +38,10 @@ test('track covers success, rejection, abort rejection, and close rejection', as
   assert.equal(await api.track(Promise.reject(Object.assign(new Error('abort'), { name: 'AbortError' }))), false);
   controller.abort();
   assert.equal(await api.track(Promise.reject(new Error('late'))), false);
+  assert.equal(await api.track(Promise.resolve('late result')), false);
   assert.equal(statuses.length, 1);
-  assert.equal(logs.length, 1);
+  assert.deepEqual(logs.slice(1).map(([, , options]) => options.key), ['LATE_OPERATION_FAILED', 'LATE_OPERATION_COMPLETED']);
+  assert.equal(logs.slice(1).every(([, message]) => !/late/.test(message.replace(/^Late/, ''))), true);
 });
 
 test('input handles non-object messages and absent native done callback', async () => {
@@ -99,8 +101,13 @@ test('errorOutput sanitizes primitive errors and wraps primitive input payloads'
   api.onInput(async () => { throw 'primitive failure'; }, { concurrency: 1, errorOutput: true, outputCount: 1 });
   await input(node, null, (value) => { output = value; });
   assert.equal(output[0].payload, null);
-  assert.equal(output[0].error.message, 'Operation failed');
+  assert.equal(output[0].error.message, 'primitive failure');
   assert.equal(output[0].error.code, 'INPUT_ERROR');
+  let nullOutput;
+  const second = makeAsync();
+  second.api.onInput(async () => { throw null; }, { concurrency: 1, errorOutput: true, outputCount: 1 });
+  await input(second.node, {}, (value) => { nullOutput = value; });
+  assert.equal(nullOutput[0].error.message, 'Operation failed');
 });
 
 test('completion guard diagnoses a native done callback that throws', async () => {

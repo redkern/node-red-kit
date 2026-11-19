@@ -23,10 +23,6 @@ export function init(RED: any, options: any): {
     };
     enabled: boolean;
     disabledReason: {
-        field: string;
-        code: string;
-        message: string;
-    } | {
         code: string;
         message: string;
         issues: {
@@ -81,7 +77,7 @@ export function init(RED: any, options: any): {
         onClose: (fn: any, options?: {}) => void;
         signal: AbortSignal;
         metrics: {
-            acquire(): any;
+            acquire(): () => void;
         };
         internalServer: {
             acquire(id: any, value: any): {

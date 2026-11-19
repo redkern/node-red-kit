@@ -1,7 +1,13 @@
 export function createSecretStore(fields?: any[]): {
     acquire: (value: any) => () => void;
     redactText: (input: any) => string;
-    redactValue: (value: any, seen?: WeakMap<object, any>) => any;
+    redactValue: (value: any) => any;
+    snapshot: () => {
+        redactText: (input: any) => string;
+        redactValue: (value: any) => any;
+        readonly released: boolean;
+        release(): void;
+    };
     readonly size: number;
 };
 export function createNodeSecrets({ node, secretStore, log, onClose, addIssue }: {

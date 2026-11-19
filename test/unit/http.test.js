@@ -80,17 +80,27 @@ test('admin route registration uses public permission API and active-entry snaps
   assert.equal(registry.remove('missing'), false);
 });
 
-test('admin route fails closed without adminAuth or when admin API is disabled', () => {
+test('admin route fails closed without adminAuth or when admin API is disabled', async () => {
   const noAuth = makeRED({ adminAuth: false });
-  const first = routeFor(noAuth.value, 'GET', '/status', () => {});
+  let handled = false;
+  const first = routeFor(noAuth.value, 'GET', '/status', () => { handled = true; });
   assert.equal(first.registry.available, false);
-  assert.equal(noAuth.routes.length, 0);
-  assert.equal(noAuth.logs.some(([level]) => level === 'warn'), true);
+  assert.equal(noAuth.routes.length, 1);
+  first.registry.add('node', {});
+  const response = makeResponse();
+  await invoke(first.registered.handler, { method: 'GET', headers: {} }, response);
+  assert.equal(response.statusCode, 503);
+  assert.deepEqual(response.body, { error: 'Admin authentication is required', code: 'ADMIN_AUTH_REQUIRED' });
+  assert.equal(handled, false);
+  first.rk.createRouteRegistry({ method: 'GET', path: '/other', permission: 'redkern.redis.read', handler() {} });
+  assert.equal(noAuth.logs.filter(([level, message]) => level === 'warn' && /adminAuth/.test(message)).length, 1);
 
   const disabled = makeRED({ httpAdminRoot: false });
   const second = routeFor(disabled.value, 'GET', '/status', () => {});
+  second.rk.createRouteRegistry({ method: 'GET', path: '/other', permission: 'redkern.redis.read', handler() {} });
   assert.equal(second.registry.available, false);
   assert.equal(disabled.routes.length, 0);
+  assert.equal(disabled.logs.filter(([level, message]) => level === 'warn' && /admin API is disabled/.test(message)).length, 1);
 });
 
 test('route definition rejects invalid methods, paths, permissions, and handlers', () => {

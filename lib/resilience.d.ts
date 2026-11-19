@@ -46,4 +46,4 @@ export function createLimiter({ concurrency, maxQueue }: {
         closed: boolean;
     };
 };
-export function classifyError(error: any): "abort" | "config" | "transient" | "auth";
+export function classifyError(error: any): "config" | "stop" | "transient" | "auth";

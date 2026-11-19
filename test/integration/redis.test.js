@@ -46,6 +46,11 @@ test.before(async () => {
     redisProcess = spawn('redis-server', [
       '--bind', '127.0.0.1', '--port', String(redisPort), '--save', '', '--appendonly', 'no', '--protected-mode', 'no'
     ], { stdio: 'ignore' });
+    const spawnFailed = once(redisProcess, 'error').then(([error]) => {
+      throw new Error(`redis-server could not start: ${error.code || error.message}; set REDIS_HOST/REDIS_PORT to use an external Redis`);
+    });
+    await Promise.race([waitForPort(redisPort), spawnFailed]);
+    return;
   }
   await waitForPort(redisPort);
 });

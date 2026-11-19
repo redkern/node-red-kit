@@ -67,13 +67,13 @@ Secrets declared in `init({ secrets })` are read from `REDKERN_<DOMAIN>_<NAME>_T
 
 `k.onInput(handler, { concurrency, maxQueue, startQueueTimeoutMs, errorOutput, outputCount })` uses a bounded FIFO limiter. Startup deadlines begin when a message arrives. `errorOutput` requires an `outputCount`; failures go to the last output and native `done()` is called without an error. `k.onClose(fn, { force })` adds a LIFO cleanup step under the shared close budget. Active input work drains before resource cleanup under that same deadline.
 
-`k.track(promise, { label, key })` consumes rejection and resolves to a boolean. `backoff(options)` returns `next()`/`reset()`. `sleep(ms, signal)` is abortable. `retry(fn, options)` invokes `fn({ attempt, signal })` and retries only when its explicit `retryOn(error)` predicate allows it. `withTimeout(promise, ms, options)` stops waiting but does not cancel the underlying operation. `createLimiter({ concurrency, maxQueue })` returns `run`, `close`, and `stats`.
+`k.track(promise, { label, key })` consumes rejection and resolves to a boolean. Managed input, startup, track, close, and HTTP operations take a redaction snapshot when they start, so a secret stays masked even if its owner (for example a config node) closes first. Work that settles after its timeout or after close is reported only as `LATE_OPERATION_COMPLETED` or `LATE_OPERATION_FAILED` with an operation ID; the original error or result is never serialized. `classifyError(error)` returns `config`, `auth`, `transient`, or `stop` (AbortError). `backoff(options)` returns `next()`/`reset()`. `sleep(ms, signal)` is abortable. `retry(fn, options)` invokes `fn({ attempt, signal })` and retries only when its explicit `retryOn(error)` predicate allows it. `withTimeout(promise, ms, options)` stops waiting but does not cancel the underlying operation. `createLimiter({ concurrency, maxQueue })` returns `run`, `close`, and `stats`.
 
 ## Authentication and admin routes
 
 `secureCompare(expected, supplied)` uses fresh-key HMAC digests and `timingSafeEqual`. `extractToken(req)` accepts an unambiguous Bearer or `x-api-key` header; query tokens are rejected. `requireSecret(k, value, label)` validates a required node secret. `PublicError(status, message, { code })` represents a public 4xx response.
 
-`rk.createRouteRegistry({ method, path, permission, handler })` registers on `RED.httpAdmin` through `RED.auth.needsPermission`. Routes fail closed when `adminAuth` is missing or the admin API is disabled. Paths are static suffixes under `rk.names.routeBase`; write methods require `application/json` with optional UTF-8 charset. The handler receives a normalized request, response facade, and active-entry snapshot. `init({ internalServer })` creates a lazy listener with exact local/token auth and per-node acquire/release leases. Cluster retry, mesh/preStop evidence, and fault-injection acceptance remain release work.
+`rk.createRouteRegistry({ method, path, permission, handler })` registers on `RED.httpAdmin` through `RED.auth.needsPermission`. Without `adminAuth` the route answers 503 `ADMIN_AUTH_REQUIRED` and the context logs one warning; with `httpAdminRoot: false` nothing is registered, no alternative listener is created, and the reason is logged once. A route may set its own `handlerTimeoutMs`. Paths are static suffixes under `rk.names.routeBase`; write methods require `application/json` with optional UTF-8 charset. The handler receives a normalized request, response facade, and active-entry snapshot. `init({ internalServer })` creates a lazy listener with exact local/token auth and per-node acquire/release leases. One listener is either loopback-only (all routes `auth: 'local'`, bound to 127.0.0.1) or token-only (bound to 0.0.0.0); mixing is rejected at init, so a drain route on an exposed metrics listener needs its own token. An acquire that arrives while the last lease is closing the listener waits for that close and then opens a new listener. Cluster retry, mesh/preStop evidence, and fault-injection acceptance remain release work.
 
 ```js
 module.exports = function (RED) {
@@ -103,7 +103,7 @@ module.exports = function (RED) {
 
 ## Metrics source
 
-When `init` receives `metrics: { contentType, metrics }`, each node can call `k.metrics.acquire()` once and release automatically on close. The palette-level source registers on the first lease, unregisters on the last, and re-announces after `redkern:metrics:discover`. V1 accepts only Prometheus text 0.0.4. The metrics receiver/aggregator remains palette-owned rather than part of kit.
+When `init` receives `metrics: { contentType, metrics }`, each node holds at most one lease from `k.metrics.acquire()` at a time; it can release and reacquire it, and the lease is released automatically on close. Disabled nodes and nodes with invalid configuration cannot acquire it. The palette-level source registers on the first lease, unregisters on the last, and re-announces after `redkern:metrics:discover`. V1 accepts only Prometheus text 0.0.4. The metrics receiver/aggregator remains palette-owned rather than part of kit.
 
 ## Redis client factory
 
@@ -111,7 +111,7 @@ The `@redkern/node-red-kit/redis` subpath exports `createRedisClient`, `classify
 
 ## Node-RED conventions
 
-Use the message's passed `send` callback and preserve unrelated message properties. Use `node.send` only for source-node events. Always catch asynchronous failures through the returned promise path; do not call `node.error` for the same failure already sent through native `done(error)`. Status colors/shapes follow Node-RED and status text stays below 20 characters.
+Use the message's passed `send` callback and preserve unrelated message properties. Use `node.send` only for source-node events. Always catch asynchronous failures through the returned promise path; do not call `node.error` for the same failure already sent through native `done(error)`. Status colors/shapes follow Node-RED and status text stays below 20 characters. System states take priority over `k.status()`: closing, then invalid configuration or disabled palette, then permanent startup failure, then internal-server failure, then starting, then the errorOutput counter; the requested status shows once none of these apply.
 
 See the [JavaScript node guide](https://nodered.org/docs/creating-nodes/node-js), [status guide](https://nodered.org/docs/creating-nodes/status), and [packaging guide](https://nodered.org/docs/creating-nodes/packaging). The kit remains a library: it deliberately has no `node-red` package metadata or `node-red` keyword.
 

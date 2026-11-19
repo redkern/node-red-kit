@@ -1,4 +1,4 @@
-export function createAsync({ node, signal, log, status, enabled, lifecycle, isClosing, configIssues, sanitizeError }: {
+export function createAsync({ node, signal, log, status, enabled, lifecycle, isClosing, configIssues, sanitizeError, snapshot, errorStatus }: {
     node: any;
     signal: any;
     log: any;
@@ -8,6 +8,11 @@ export function createAsync({ node, signal, log, status, enabled, lifecycle, isC
     isClosing?: () => boolean;
     configIssues?: () => any[];
     sanitizeError?: (error: any) => any;
+    snapshot?: () => Readonly<{
+        redactValue: (value: any) => any;
+        release(): void;
+    }>;
+    errorStatus?: (text: any) => any;
 }): {
     track: (promise: unknown, { label, key }?: {
         label?: string;

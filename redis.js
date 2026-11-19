@@ -4,6 +4,16 @@ const { names, instanceId } = require('./lib/naming.js');
 const { withTimeout } = require('./lib/resilience.js');
 
 const ROLES = new Set(['shared', 'blocking', 'subscriber']);
+const OPTION_NAMES = Object.freeze([
+  'ioredis', 'domain', 'configId', 'role', 'mode', 'host', 'port', 'nodes', 'natMap', 'db', 'tls',
+  'username', 'password', 'connectTimeout', 'commandTimeout', 'blockMs', 'logger'
+]);
+
+function retryDelay(attempt) {
+  const exponent = Math.min(Math.max(1, Number(attempt) || 1) - 1, 15);
+  const ceiling = Math.min(30000, 1000 * 2 ** exponent);
+  return Math.floor(ceiling / 2 + Math.random() * ceiling / 2);
+}
 
 /**
  * @param {{ ioredis: any, domain: string, configId: string, role: 'shared'|'blocking'|'subscriber', mode: 'standalone'|'cluster', host?: string, port?: number, nodes?: Array<{ host: string, port: number }>, natMap?: Record<string, { host: string, port: number }>, db?: number, tls?: object, username?: string, password?: string, connectTimeout?: number, commandTimeout?: number, blockMs?: number, logger: { error: Function } }} options
@@ -19,6 +29,7 @@ function createRedisClient(options) {
   if (password !== undefined && (typeof password !== 'string' || password.length === 0)) throw configError('password must be a non-empty string');
 
   const connectionName = `redkern-${domain}-${role}-${configId.slice(0, 8)}-${instanceId()}`;
+  if (/[\s\x00-\x1f\x7f]/.test(connectionName)) throw configError('Redis connection name must not contain whitespace or control characters');
   const roleOptions = {
     lazyConnect: true,
     enableOfflineQueue: false,
@@ -36,10 +47,12 @@ function createRedisClient(options) {
     roleOptions.enableAutoPipelining = false;
     roleOptions.maxRetriesPerRequest = null;
     if (commandTimeout !== undefined) {
+      if (blockMs === 0) throw configError('a finite commandTimeout is not allowed with BLOCK 0; set blockMs to the finite BLOCK duration');
       if (commandTimeout <= blockMs) throw configError('blocking commandTimeout must exceed BLOCK duration');
       roleOptions.commandTimeout = commandTimeout;
     }
   } else {
+    if (commandTimeout !== undefined) throw configError('subscriber connections do not accept commandTimeout');
     roleOptions.enableAutoPipelining = false;
     roleOptions.maxRetriesPerRequest = null;
     roleOptions.autoResubscribe = true;
@@ -53,11 +66,12 @@ function createRedisClient(options) {
       host,
       port,
       db,
-      retryStrategy: (attempt) => Math.min(attempt * 1000, 30000)
+      retryStrategy: retryDelay
     });
   } else {
     const clusterOptions = {
-      clusterRetryStrategy: (attempt) => Math.min(1000 * attempt, 30000),
+      clusterRetryStrategy: retryDelay,
+      ...(tls ? { dnsLookup: (address, callback) => callback(null, address) } : {}),
       lazyConnect: true,
       enableOfflineQueue: false,
       enableReadyCheck: false,
@@ -66,6 +80,8 @@ function createRedisClient(options) {
         ...target,
         ...(tls ? { tls: { ...tls, servername: target.host } } : {})
       }])) } : {}),
+      // ioredis forces enableOfflineQueue on per-node connections; the Cluster-level
+      // enableOfflineQueue: false above is what rejects commands while a node is not ready.
       redisOptions: {
         ...roleOptions,
         enableOfflineQueue: true,
@@ -182,6 +198,9 @@ function hashTag(base, tag) {
 
 function validateOptions(options) {
   if (!options || typeof options !== 'object') throw new TypeError('Redis options are required');
+  for (const key of Object.keys(options)) {
+    if (!OPTION_NAMES.includes(key)) throw new TypeError(`Unsupported Redis option: ${key}`);
+  }
   if (typeof options.ioredis !== 'function' || typeof options.ioredis.Cluster !== 'function') {
     throw new TypeError('ioredis constructor and Cluster constructor are required');
   }
@@ -197,6 +216,7 @@ function validateOptions(options) {
   }
   if (options.mode === 'standalone') {
     if (typeof options.host !== 'string' || options.host.length === 0) throw new TypeError('standalone host is required');
+    if (/[/@\s]/.test(options.host)) throw new TypeError('standalone host must be a hostname, not a URL or credentials');
     if (!Number.isInteger(options.port) || options.port < 1 || options.port > 65535) throw new TypeError('standalone port is invalid');
   } else if (!Array.isArray(options.nodes) || options.nodes.length === 0 || options.nodes.some((node) => !node || typeof node.host !== 'string' || !Number.isInteger(node.port) || node.port < 1 || node.port > 65535)) {
     throw new TypeError('cluster nodes are required and must be valid');
@@ -207,9 +227,11 @@ function validateOptions(options) {
     throw new TypeError('natMap must map advertised addresses to valid hosts and ports');
   }
   if (options.db !== undefined && (!Number.isSafeInteger(options.db) || options.db < 0)) throw new TypeError('db must be a non-negative integer');
-  if (options.tls !== undefined && (!options.tls || typeof options.tls !== 'object' || options.tls.rejectUnauthorized === false)) {
+  if (options.tls !== undefined && (!options.tls || typeof options.tls !== 'object' || options.tls.rejectUnauthorized === false ||
+    Object.hasOwn(options.tls, 'checkServerIdentity'))) {
     throw new TypeError('TLS must be an object with certificate verification enabled');
   }
+  if (options.blockMs !== undefined && options.role !== 'blocking') throw new TypeError('blockMs is only valid for blocking connections');
   if (options.role === 'blocking' && options.blockMs !== undefined && (!Number.isSafeInteger(options.blockMs) || options.blockMs < 0)) {
     throw new TypeError('blockMs must be a non-negative integer');
   }

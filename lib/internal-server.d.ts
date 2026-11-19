@@ -1,4 +1,4 @@
-export function createInternalServer({ domainNames, port, routes, tokens, tokenNames, metricsContentType, log, redact, handlerTimeoutMs }: {
+export function createInternalServer({ domainNames, port, routes, tokens, tokenNames, metricsContentType, log, redact, snapshot, handlerTimeoutMs }: {
     domainNames: any;
     port: any;
     routes: any;
@@ -7,6 +7,10 @@ export function createInternalServer({ domainNames, port, routes, tokens, tokenN
     metricsContentType: any;
     log: any;
     redact?: (value: any) => any;
+    snapshot?: () => Readonly<{
+        redactValue: (value: any) => any;
+        release(): void;
+    }>;
     handlerTimeoutMs?: number;
 }): {
     host: string;

@@ -114,7 +114,7 @@ test('limiter releases its slot and drains queued work after task rejection', as
 
 test('classifyError separates config, abort, network, TLS, and unknown failures', () => {
   assert.equal(classifyError({ code: 'CONFIG_INVALID' }), 'config');
-  assert.equal(classifyError({ code: 'ABORT_ERR' }), 'abort');
+  assert.equal(classifyError({ code: 'ABORT_ERR' }), 'stop');
   assert.equal(classifyError({ code: 'ECONNRESET' }), 'transient');
   assert.equal(classifyError({ code: 'ERR_TLS_CERT_ALTNAME_INVALID' }), 'auth');
   assert.equal(classifyError(new Error('unknown')), 'transient');

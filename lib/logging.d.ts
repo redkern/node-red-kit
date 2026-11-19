@@ -22,7 +22,7 @@ export function createStatus(node: any, { minIntervalMs, onTimer, clearTimer }?:
     clearTimer?: typeof clearTimeout;
 }): {
     (state: any, text: any): void;
-    setOverlay(key: any, state: any, text: any): void;
+    setOverlay(key: any, state: any, text: any, priority?: any): void;
     clearOverlay(key: any): void;
     dispose(): void;
 };

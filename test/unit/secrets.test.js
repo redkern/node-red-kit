@@ -255,7 +255,10 @@ test('status and logs redact secret values and track rejects work after close', 
   await close(node);
   const logCountAfterClose = node.logs.length;
   assert.equal(await context.track(Promise.reject(new Error('late status-secret rejection'))), false);
-  assert.equal(node.logs.length, logCountAfterClose);
+  const lateLogs = node.logs.slice(logCountAfterClose);
+  assert.equal(lateLogs.length, 1);
+  assert.match(String(lateLogs[0].at(-1)), /LATE_OPERATION_FAILED|Late operation [0-9a-f-]{36} failed/);
+  assert.equal(lateLogs.some((entry) => String(entry).includes('status-secret')), false);
 });
 
 test('top-level requireSecret delegates to bound node context', () => {
@@ -264,4 +267,13 @@ test('top-level requireSecret delegates to bound node context', () => {
   const context = rk.bind(mockNode('helper'));
   assert.equal(kit.requireSecret(context, 'present', 'password'), true);
   assert.equal(kit.requireSecret(context, '', 'password'), false);
+});
+
+test('KIT-AUTH-3 requireSecret treats an unexpanded environment placeholder as missing', () => {
+  const mock = mockRED();
+  const rk = kit.init(mock.value, { domain: 'redis' });
+  const context = rk.bind(mockNode('placeholder'));
+  assert.equal(context.requireSecret('${REDIS_PASSWORD}', 'password'), false);
+  assert.equal(context.requireSecret('${$parent.REDIS_PASSWORD}', 'token'), false);
+  assert.equal(context.requireSecret('prefix-${REDIS_PASSWORD}', 'literal'), true);
 });

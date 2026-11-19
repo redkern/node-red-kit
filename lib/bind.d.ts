@@ -44,7 +44,7 @@ export function bind(context: any, node: any): {
     onClose: (fn: any, options?: {}) => void;
     signal: AbortSignal;
     metrics: {
-        acquire(): any;
+        acquire(): () => void;
     };
     internalServer: {
         acquire(id: any, value: any): {

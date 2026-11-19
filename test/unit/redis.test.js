@@ -53,7 +53,12 @@ test('shared Redis handle is lazy, disables unsafe queues, and connects once', a
   assert.equal(handle.client.options.enableAutoPipelining, true);
   assert.equal(handle.client.options.maxRetriesPerRequest, 3);
   assert.equal(handle.client.options.commandTimeout, 5000);
-  assert.equal(handle.client.options.retryStrategy(40), 30000);
+  for (let index = 0; index < 20; index += 1) {
+    const late = handle.client.options.retryStrategy(40);
+    assert.ok(late >= 15000 && late <= 30000);
+    const first = handle.client.options.retryStrategy(1);
+    assert.ok(first >= 500 && first <= 1000);
+  }
   const [first, second] = await Promise.all([handle.connect(), handle.connect()]);
   assert.equal(first, undefined);
   assert.equal(second, undefined);
@@ -177,6 +182,8 @@ test('blocking/subscriber roles disable replay and validate command timeout', ()
   assert.equal(blocking.client.options.autoResendUnfulfilledCommands, false);
   assert.equal(blocking.client.options.commandTimeout, 2000);
   assert.throws(() => createRedisClient(baseOptions({ role: 'blocking', commandTimeout: 1000, blockMs: 1000 })), /exceed BLOCK/);
+  assert.throws(() => createRedisClient(baseOptions({ role: 'blocking', commandTimeout: 5000 })), /BLOCK 0/);
+  assert.throws(() => createRedisClient(baseOptions({ role: 'blocking', commandTimeout: 5000, blockMs: 0 })), /BLOCK 0/);
   const subscriber = createRedisClient(baseOptions({ role: 'subscriber' }));
   assert.equal(subscriber.client.options.autoResubscribe, true);
   assert.equal(subscriber.client.options.enableAutoPipelining, false);
@@ -191,6 +198,11 @@ test('cluster requires db zero and applies TLS hostname-safe options', () => {
   assert.equal(handle.client.options.redisOptions.connectionName.startsWith('redkern-redis-shared-12345678-'), true);
   assert.deepEqual(handle.client.options.redisOptions.tls, { rejectUnauthorized: true });
   assert.equal(handle.client.options.redisOptions.dnsLookup, undefined);
+  handle.client.options.dnsLookup('redis-1.internal', (error, address) => {
+    assert.equal(error, null);
+    assert.equal(address, 'redis-1.internal');
+  });
+  assert.equal(createRedisClient(baseOptions({ mode: 'cluster', nodes })).client.options.dnsLookup, undefined);
   assert.throws(() => createRedisClient(baseOptions({ mode: 'cluster', nodes, tls: { rejectUnauthorized: false } })), /certificate verification/);
 
   const natMap = { 'redis-1.internal:6379': { host: 'redis-1.internal', port: 6379 } };
@@ -258,6 +270,11 @@ test('Redis validates every connection boundary and reports invalid clients', ()
     [{ tls: null }, /TLS/],
     [{ tls: { rejectUnauthorized: false } }, /TLS/],
     [{ role: 'blocking', blockMs: -1 }, /blockMs/],
+    [{ blockMs: 1000 }, /only valid for blocking/],
+    [{ role: 'subscriber', commandTimeout: 1000 }, /subscriber/],
+    [{ tls: { checkServerIdentity: () => undefined } }, /TLS/],
+    [{ host: 'redis://user:secret@redis.internal' }, /not a URL/],
+    [{ retryStrategy: () => 1 }, /Unsupported Redis option/],
     [{ password: '' }, /password/]
   ]) assert.throws(() => createRedisClient(baseOptions(overrides)), message);
 
@@ -297,8 +314,12 @@ test('Redis forwards client errors, retries failed connection, and supports forc
 
 test('cluster retry strategy caps delay and already-ended clients close cleanly', async () => {
   const handle = createRedisClient(baseOptions({ mode: 'cluster', nodes: [{ host: 'redis', port: 6379 }] }));
-  assert.equal(handle.client.options.clusterRetryStrategy(1), 1000);
-  assert.equal(handle.client.options.clusterRetryStrategy(40), 30000);
+  const first = handle.client.options.clusterRetryStrategy(1);
+  assert.ok(first >= 500 && first <= 1000);
+  const late = handle.client.options.clusterRetryStrategy(40);
+  assert.ok(late >= 15000 && late <= 30000);
+  const invalid = handle.client.options.clusterRetryStrategy(undefined);
+  assert.ok(invalid >= 500 && invalid <= 1000);
   handle.client.status = 'end';
   await handle.close();
 });
