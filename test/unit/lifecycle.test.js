@@ -44,6 +44,22 @@ test('close timeout forces the in-flight and skipped LIFO resources', async () =
   assert.equal(logs.some(([level, error]) => level === 'error' && error.code === 'CLOSE_TIMEOUT'), true);
 });
 
+test('expired close deadline forces every remaining resource in LIFO order', async () => {
+  const { lifecycle } = makeLifecycle(10);
+  const forced = [];
+  lifecycle.onClose(() => assert.fail('expired close handler must not run'), { force: () => forced.push('older') });
+  lifecycle.onClose(() => assert.fail('expired close handler must not run'), { force: () => forced.push('newer') });
+  const originalNow = Date.now;
+  let calls = 0;
+  Date.now = () => calls++ === 0 ? 100 : 111;
+  try {
+    await close(lifecycle);
+  } finally {
+    Date.now = originalNow;
+  }
+  assert.deepEqual(forced, ['newer', 'older']);
+});
+
 test('failed force stops startup retry when cleanup is not confirmed', async () => {
   const { lifecycle } = makeLifecycle();
   let attempts = 0;
